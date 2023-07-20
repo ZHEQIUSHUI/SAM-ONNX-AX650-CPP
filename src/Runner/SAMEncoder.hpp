@@ -5,13 +5,11 @@
 
 class SAMEncoder
 {
-private:
-    std::shared_ptr<ax_runner_base> model;
-    // std::vector<float> samfeature;
+protected:
     int nFeatureSize = 1;
     cv::Mat input;
 
-    float get_input_data_letterbox(cv::Mat mat, cv::Mat&img_new, int letterbox_rows, int letterbox_cols, bool bgr2rgb = true)
+    float get_input_data_letterbox(cv::Mat mat, cv::Mat &img_new, int letterbox_rows, int letterbox_cols, bool bgr2rgb = true)
     {
         /* letterbox process to support different letterbox size */
         float scale_letterbox;
@@ -45,55 +43,13 @@ private:
     }
 
 public:
-    int Load(std::string model_file)
-    {
-        model.reset(new ax_runner_ax650);
-        model->init(model_file.c_str());
-        auto &output = model->get_output(0);
+    virtual int Load(std::string model_file) = 0;
 
-        nFeatureSize = 1;
-        for (size_t i = 0; i < output.vShape.size(); i++)
-        {
-            nFeatureSize *= output.vShape[i];
-        }
-        return 0;
-    }
+    virtual int Inference(cv::Mat src, float &scale) = 0;
+    virtual int InputWidth() = 0;
+    virtual int InputHeight() = 0;
 
-    int Inference(cv::Mat src, float &scale)
-    {
-        scale = get_input_data_letterbox(src, input, InputHeight(), InputWidth(), true);
-        ax_image_t aximage;
-        aximage.nWidth = InputWidth();
-        aximage.nHeight = InputHeight();
-        aximage.pVir = input.data;
-        aximage.tStride_W = aximage.nWidth;
-
-        auto ret = model->inference(&aximage);
-
-        return ret;
-    }
-
-    int InputWidth()
-    {
-        return model->get_algo_width();
-    }
-    int InputHeight()
-    {
-        return model->get_algo_height();
-    }
-
-    float *FeaturePtr()
-    {
-        return (float *)model->get_output(0).pVirAddr;
-    }
-
-    int FeatureSize()
-    {
-        return nFeatureSize;
-    }
-
-    std::vector<unsigned int> FeatureShape()
-    {
-        return model->get_output(0).vShape;
-    }
+    virtual float *FeaturePtr() = 0;
+    virtual int FeatureSize() = 0;
+    virtual std::vector<unsigned int> FeatureShape() = 0;
 };
