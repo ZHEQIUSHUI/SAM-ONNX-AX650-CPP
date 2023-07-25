@@ -10,6 +10,7 @@ class SAM
 private:
     SAMDecoderOnnx decoder;
     std::shared_ptr<SAMEncoder> encoder;
+    bool bInit = false;
 
 public:
     SAM() {}
@@ -30,11 +31,17 @@ public:
         }
         encoder->Load(encoder_model);
         decoder.Load(decoder_model);
+        bInit = true;
         return 0;
     }
 
     void Encode(cv::Mat src)
     {
+        if (!bInit)
+        {
+            return;
+        }
+
         float scale;
         auto time_start = std::chrono::high_resolution_clock::now();
         encoder->Inference(src, scale);
@@ -47,11 +54,19 @@ public:
 
     std::vector<MatInfo> Decode(cv::Point pt)
     {
+        if (!bInit)
+        {
+            return std::vector<MatInfo>();
+        }
         return decoder.Inference(pt);
     }
 
     std::vector<MatInfo> Decode(cv::Rect box)
     {
+        if (!bInit)
+        {
+            return std::vector<MatInfo>();
+        }
         return decoder.Inference(box);
     }
 };

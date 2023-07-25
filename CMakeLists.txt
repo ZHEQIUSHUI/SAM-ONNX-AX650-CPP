@@ -32,13 +32,17 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 if(NOT ONNXRUNTIME_DIR)
     set(ONNXRUNTIME_DIR ${CMAKE_SOURCE_DIR}/third_party/onnxruntime-aarch64-none-gnu-1.16.0)
 endif()
+
 message(STATUS "ONNXRUNTIME_DIR Path: ${ONNXRUNTIME_DIR}")
 
 include_directories(${ONNXRUNTIME_DIR}/include)
 link_directories("${ONNXRUNTIME_DIR}/lib")
 set(ONNXRUNTIME_LIB onnxruntime)
 
-set(OpenCV_DIR ${CMAKE_SOURCE_DIR}/third_party/libopencv-4.6-aarch64-none/lib/cmake/opencv4)
+if(NOT OpenCV_DIR)
+    set(OpenCV_DIR ${CMAKE_SOURCE_DIR}/third_party/libopencv-4.6-aarch64-none/lib/cmake/opencv4)
+endif()
+
 message(STATUS "OPENCV_DIR Path: ${OpenCV_DIR}")
 find_package(OpenCV REQUIRED)
 
@@ -46,19 +50,28 @@ include_directories(${OpenCV_INCLUDE_DIRS})
 include_directories(axpi_pro_bsp_sdk/msp/out/include)
 link_directories(axpi_pro_bsp_sdk/msp/out/lib)
 
+option(BUILD_WITH_AX650 "build with ax650" OFF)
+
+if(BUILD_WITH_AX650)
+    add_compile_definitions(-DBUILD_WITH_AX650)
+endif()
+
+message(STATUS "BUILD_WITH_AX650 : ${BUILD_WITH_AX650}")
+
 add_library(sam STATIC
-    ${CMAKE_SOURCE_DIR}/src/Runner/BaseRunner.cpp
-    ${CMAKE_SOURCE_DIR}/src/Runner/ax_model_runner_ax650.cpp
+    src/Runner/BaseRunner.cpp
+    src/Runner/ax_model_runner_ax650.cpp
 )
 
-add_executable(main ${CMAKE_SOURCE_DIR}/src/main.cpp)
-
+add_executable(main src/main.cpp)
 
 target_link_libraries(main sam)
 
 target_link_libraries(main ${OpenCV_LIBS})
-target_link_libraries(main gomp ${ONNXRUNTIME_LIB} ${OpenCV_LIBS})
+target_link_libraries(main gomp ${ONNXRUNTIME_LIB})
 
-target_link_libraries(main ax_engine ax_interpreter ax_sys ax_ivps)
+if(BUILD_WITH_AX650)
+    target_link_libraries(main ax_engine ax_interpreter ax_sys ax_ivps)
+endif()
 
 install(TARGETS main DESTINATION bin)

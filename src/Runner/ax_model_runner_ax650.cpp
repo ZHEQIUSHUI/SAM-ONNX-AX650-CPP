@@ -1,4 +1,5 @@
 #include "ax_model_runner_ax650.hpp"
+#ifdef BUILD_WITH_AX650
 #include "string.h"
 #include "fstream"
 // #include "utilities/file.hpp"
@@ -328,3 +329,25 @@ int ax_runner_ax650::inference(ax_image_t *pstFrame)
     // memcpy(minput_tensors[0].pVirAddr, pstFrame->pVir, minput_tensors[0].nSize);
     return AX_ENGINE_RunSync(m_handle->handle, &m_handle->io_data);
 }
+#else
+int ax_runner_ax650::init(const char *model_file)
+{
+    return -1;
+}
+
+void ax_runner_ax650::deinit()
+{
+}
+
+int ax_runner_ax650::get_algo_width() { return -1; }
+int ax_runner_ax650::get_algo_height() { return -1; }
+ax_color_space_e ax_runner_ax650::get_color_space()
+{
+    return axdl_color_space_unknown;
+}
+
+int ax_runner_ax650::inference(ax_image_t *pstFrame)
+{
+    return -1;
+}
+#endif // BUILD_WITH_AX650

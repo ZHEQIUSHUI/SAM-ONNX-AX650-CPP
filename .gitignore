@@ -18,3 +18,4 @@ data/
 # model
 onnx_models
 axpi_pro_bsp_sdk
+third_party/opencv-mobile-*
