@@ -20,6 +20,7 @@ private:
     cv::Mat rgba_mask;
     std::vector<MatInfo> v_mask;
     bool isBoxPrompt = false;
+    bool isRealtimeDecode = false;
 
     bool mouseHolding = false;
     QPoint pt_first, pt_secend;
@@ -28,8 +29,8 @@ private:
 
     void resizeEvent(QResizeEvent *event) override
     {
-        pt_first =  QPoint(-10000,-10000);
-        pt_secend = QPoint(-10000,-10000);
+        pt_first = QPoint(-10000, -10000);
+        pt_secend = QPoint(-10000, -10000);
     }
 
     void mousePressEvent(QMouseEvent *e) override
@@ -45,16 +46,16 @@ private:
         mouseHolding = false;
         samDecode();
         repaint();
-
     }
 
     void mouseMoveEvent(QMouseEvent *e) override
     {
-        emit mouseMoveSignal(e);
+
         if (mouseHolding)
         {
             pt_secend = e->pos();
-            samDecode();
+            if (isRealtimeDecode)
+                samDecode();
             repaint();
         }
     }
@@ -83,10 +84,10 @@ private:
             }
         }
 
-        rgba_mask  = cv::Mat(v_mask[maxid].mask.rows, v_mask[maxid].mask.cols, CV_8UC4, cv::Scalar(0, 0, 0, 0));
+        rgba_mask = cv::Mat(v_mask[maxid].mask.rows, v_mask[maxid].mask.cols, CV_8UC4, cv::Scalar(0, 0, 0, 0));
         rgba_mask.setTo(cv::Scalar(200, 200, 0, 200), v_mask[maxid].mask);
 
-        cur_mask = QImage(rgba_mask.data,rgba_mask.cols,rgba_mask.rows,QImage::Format_RGBA8888);
+        cur_mask = QImage(rgba_mask.data, rgba_mask.cols, rgba_mask.rows, QImage::Format_RGBA8888);
     }
 
     QPoint getSourcePoint(QImage img, QPoint pt)
@@ -168,8 +169,8 @@ public:
     void SetImage(QImage img)
     {
         cur_mask = QImage();
-        pt_first =  QPoint(-10000,-10000);
-        pt_secend = QPoint(-10000,-10000);
+        pt_first = QPoint(-10000, -10000);
+        pt_secend = QPoint(-10000, -10000);
 
         cur_image = img;
         cv::Mat src(cur_image.height(), cur_image.width(), CV_8UC4, cur_image.bits());
@@ -183,10 +184,15 @@ public:
     {
         isBoxPrompt = useBoxprompt;
         cur_mask = QImage();
-        pt_first =  QPoint(-10000,-10000);
-        pt_secend = QPoint(-10000,-10000);
+        pt_first = QPoint(-10000, -10000);
+        pt_secend = QPoint(-10000, -10000);
 
         repaint();
+    }
+
+    void SetRealtimeDecode(bool RealtimeDecode)
+    {
+        isRealtimeDecode = RealtimeDecode;
     }
 
     void InitModel(std::string encoder_model, std::string decoder_model)

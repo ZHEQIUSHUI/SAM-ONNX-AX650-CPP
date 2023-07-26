@@ -22,6 +22,8 @@ private slots:
 
     void on_ckb_boxprompt_stateChanged(int arg1);
 
+    void on_ckb_realtime_decode_stateChanged(int arg1);
+
 private:
     Ui::MainWindow *ui;
 };

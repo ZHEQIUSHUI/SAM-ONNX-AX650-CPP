@@ -29,6 +29,13 @@
            </widget>
           </item>
           <item>
+           <widget class="QCheckBox" name="ckb_realtime_decode">
+            <property name="text">
+             <string>LiveDecode</string>
+            </property>
+           </widget>
+          </item>
+          <item>
            <widget class="QCheckBox" name="ckb_boxprompt">
             <property name="text">
              <string>BoxPrompt</string>

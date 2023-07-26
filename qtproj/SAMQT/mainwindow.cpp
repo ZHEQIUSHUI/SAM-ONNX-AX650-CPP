@@ -10,7 +10,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
     std::string encoder_model_path = "/home/arno/workspace/projects/SegmentAnything-OnnxRunner/onnx_models/mobile_sam_encoder.onnx";
     std::string decoder_model_path = "/home/arno/workspace/projects/SegmentAnything-OnnxRunner/onnx_models/mobile_sam_decoder.onnx";
-    this->ui->label->InitModel(encoder_model_path,decoder_model_path);
+    this->ui->label->InitModel(encoder_model_path, decoder_model_path);
 }
 
 MainWindow::~MainWindow()
@@ -20,8 +20,8 @@ MainWindow::~MainWindow()
 
 void MainWindow::on_btn_read_image_clicked()
 {
-    auto filename = QFileDialog::getOpenFileName(this,"","","image(*.png *.jpg *.jpeg *.bmp)");
-    if(filename.isEmpty())
+    auto filename = QFileDialog::getOpenFileName(this, "", "", "image(*.png *.jpg *.jpeg *.bmp)");
+    if (filename.isEmpty())
     {
         return;
     }
@@ -31,5 +31,10 @@ void MainWindow::on_btn_read_image_clicked()
 
 void MainWindow::on_ckb_boxprompt_stateChanged(int arg1)
 {
-    this->ui->label->SetBoxPrompt( this->ui->ckb_boxprompt->isChecked());
+    this->ui->label->SetBoxPrompt(this->ui->ckb_boxprompt->isChecked());
+}
+
+void MainWindow::on_ckb_realtime_decode_stateChanged(int arg1)
+{
+    this->ui->label->SetRealtimeDecode(this->ui->ckb_realtime_decode->isChecked());
 }
