@@ -2,6 +2,7 @@
 #include "./ui_mainwindow.h"
 
 #include "QImage"
+#include "QFileDialog"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow)
@@ -19,11 +20,13 @@ MainWindow::~MainWindow()
 
 void MainWindow::on_btn_read_image_clicked()
 {
-    QImage img("/home/arno/workspace/projects/SegmentAnything-OnnxRunner/test.jpg");
-
-
+    auto filename = QFileDialog::getOpenFileName(this,"","","image(*.png *.jpg *.jpeg *.bmp)");
+    if(filename.isEmpty())
+    {
+        return;
+    }
+    QImage img(filename);
     this->ui->label->SetImage(img);
-    this->ui->label->repaint();
 }
 
 void MainWindow::on_ckb_boxprompt_stateChanged(int arg1)

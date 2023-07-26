@@ -26,10 +26,14 @@ private:
 
     SAM sam;
 
+    void resizeEvent(QResizeEvent *event) override
+    {
+        pt_first =  QPoint(-10000,-10000);
+        pt_secend = QPoint(-10000,-10000);
+    }
+
     void mousePressEvent(QMouseEvent *e) override
     {
-        printf("%d %d\n", e->x(), e->y());
-        fflush(stdout);
         pt_first = pt_secend = e->pos();
         mouseHolding = true;
         repaint();
@@ -37,8 +41,6 @@ private:
 
     void mouseReleaseEvent(QMouseEvent *e) override
     {
-        printf("%d %d\n", e->x(), e->y());
-        fflush(stdout);
         pt_secend = e->pos();
         mouseHolding = false;
         samDecode();
@@ -140,15 +142,7 @@ private:
 
     void paintEvent(QPaintEvent *event) override
     {
-
-        //
-        //        if(!sr.empty())
-        //        cv::imwrite("1.jpg",sr);
-
-        //        cv::circle(sr,cv::Point(pt.x(),pt.y()),2,cv::Scalar(0,255,0),3);
-
         QPainter p(this);
-
         p.drawImage(getTargetRect(cur_image), cur_image);
         p.drawImage(getTargetRect(cur_image), cur_mask);
         QColor color(0, 255, 0, 200);
@@ -173,16 +167,26 @@ public:
 
     void SetImage(QImage img)
     {
+        cur_mask = QImage();
+        pt_first =  QPoint(-10000,-10000);
+        pt_secend = QPoint(-10000,-10000);
+
         cur_image = img;
         cv::Mat src(cur_image.height(), cur_image.width(), CV_8UC4, cur_image.bits());
         cv::Mat rgb;
         cv::cvtColor(src, rgb, cv::COLOR_RGBA2RGB);
         sam.Encode(rgb);
+        repaint();
     }
 
     void SetBoxPrompt(bool useBoxprompt)
     {
         isBoxPrompt = useBoxprompt;
+        cur_mask = QImage();
+        pt_first =  QPoint(-10000,-10000);
+        pt_secend = QPoint(-10000,-10000);
+
+        repaint();
     }
 
     void InitModel(std::string encoder_model, std::string decoder_model)
