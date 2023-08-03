@@ -2,10 +2,12 @@
 #ifdef BUILD_WITH_AX650
 #include "string.h"
 #include "fstream"
+#include "memory"
 // #include "utilities/file.hpp"
 #include <ax_sys_api.h>
 #include <ax_engine_api.h>
-
+#include <fcntl.h>
+#include <sys/mman.h>
 #include "sample_log.h"
 
 #define AX_CMM_ALIGN_SIZE 128
@@ -30,6 +32,50 @@ bool file_exist(const std::string &path)
 
     return flag;
 }
+
+class MMap
+{
+private:
+    void *_add;
+    int _size;
+
+public:
+    MMap() {}
+    MMap(const char *file)
+    {
+        _add = _mmap(file, &_size);
+    }
+    ~MMap()
+    {
+        munmap(_add, _size);
+    }
+
+    size_t size()
+    {
+        return _size;
+    }
+
+    void *data()
+    {
+        return _add;
+    }
+
+    static void *_mmap(const char *model_file, int *model_size)
+    {
+        auto *file_fp = fopen(model_file, "r");
+        if (!file_fp)
+        {
+            ALOGE("Read Run-Joint model(%s) file failed.\n", model_file);
+            return nullptr;
+        }
+        fseek(file_fp, 0, SEEK_END);
+        *model_size = ftell(file_fp);
+        fclose(file_fp);
+        int fd = open(model_file, O_RDWR, 0644);
+        void *mmap_add = mmap(NULL, *model_size, PROT_WRITE, MAP_SHARED, fd, 0);
+        return mmap_add;
+    }
+};
 
 bool read_file(const std::string &path, std::vector<char> &data)
 {
@@ -168,16 +214,16 @@ int ax_runner_ax650::init(const char *model_file)
     }
 
     // 2. load model
-    std::vector<char> model_buffer;
-    if (!read_file(model_file, model_buffer))
+    std::shared_ptr<MMap> model_buffer(new MMap(model_file));
+    if (!model_buffer->data())
     {
-        fprintf(stderr, "Read Run-Joint model(%s) file failed.\n", model_file);
+        ALOGE("mmap");
         return -1;
     }
 
     // 3. create handle
 
-    ret = AX_ENGINE_CreateHandle(&m_handle->handle, model_buffer.data(), model_buffer.size());
+    ret = AX_ENGINE_CreateHandle(&m_handle->handle, model_buffer->data(), model_buffer->size());
     if (0 != ret)
     {
         ALOGE("AX_ENGINE_CreateHandle");
@@ -327,6 +373,10 @@ int ax_runner_ax650::inference(ax_image_t *pstFrame)
     }
 
     // memcpy(minput_tensors[0].pVirAddr, pstFrame->pVir, minput_tensors[0].nSize);
+    return inference();
+}
+int ax_runner_ax650::inference()
+{
     return AX_ENGINE_RunSync(m_handle->handle, &m_handle->io_data);
 }
 #else
@@ -347,6 +397,11 @@ ax_color_space_e ax_runner_ax650::get_color_space()
 }
 
 int ax_runner_ax650::inference(ax_image_t *pstFrame)
+{
+    return -1;
+}
+
+int ax_runner_ax650::inference()
 {
     return -1;
 }

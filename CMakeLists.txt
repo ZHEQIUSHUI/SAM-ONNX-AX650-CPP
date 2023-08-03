@@ -75,3 +75,17 @@ if(BUILD_WITH_AX650)
 endif()
 
 install(TARGETS main DESTINATION bin)
+
+
+add_executable(main_inpaint src/main_inpaint.cpp)
+
+target_link_libraries(main_inpaint sam)
+
+target_link_libraries(main_inpaint ${OpenCV_LIBS})
+target_link_libraries(main_inpaint gomp ${ONNXRUNTIME_LIB})
+
+if(BUILD_WITH_AX650)
+    target_link_libraries(main_inpaint ax_engine ax_interpreter ax_sys ax_ivps)
+endif()
+
+install(TARGETS main_inpaint DESTINATION bin)

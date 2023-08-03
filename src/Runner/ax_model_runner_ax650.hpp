@@ -5,7 +5,6 @@ class ax_runner_ax650 : public ax_runner_base
 {
 protected:
     struct ax_joint_runner_ax650_handle_t *m_handle = nullptr;
-    std::vector<ax_runner_tensor_t> minput_tensors;
 
 public:
     int init(const char *model_file) override;
@@ -17,4 +16,5 @@ public:
     ax_color_space_e get_color_space() override;
 
     int inference(ax_image_t *pstFrame) override;
+    int inference() override;
 };

@@ -24,6 +24,10 @@ private slots:
 
     void on_ckb_realtime_decode_stateChanged(int arg1);
 
+    void on_btn_remove_obj_clicked();
+
+    void on_btn_reset_clicked();
+
 private:
     Ui::MainWindow *ui;
 };

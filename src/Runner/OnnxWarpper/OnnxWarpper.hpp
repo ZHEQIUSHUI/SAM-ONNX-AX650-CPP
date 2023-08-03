@@ -119,7 +119,7 @@ public:
         // {
         //     printf("%20s: \n", outputs_name_cstr[i]);
         // }
-        session.Run(run_options, inputs_name_cstr.data(), inputs_tensor.data(), 1, outputs_name_cstr.data(), outputs_tensor.data(), outputs_name_cstr.size());
+        session.Run(run_options, inputs_name_cstr.data(), inputs_tensor.data(), inputs_tensor.size(), outputs_name_cstr.data(), outputs_tensor.data(), outputs_tensor.size());
         return 0;
     }
 

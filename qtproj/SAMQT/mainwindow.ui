@@ -45,6 +45,20 @@
          </layout>
         </item>
         <item>
+         <widget class="QPushButton" name="btn_remove_obj">
+          <property name="text">
+           <string>RemoveObject</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="btn_reset">
+          <property name="text">
+           <string>Reset</string>
+          </property>
+         </widget>
+        </item>
+        <item>
          <spacer name="verticalSpacer">
           <property name="orientation">
            <enum>Qt::Vertical</enum>

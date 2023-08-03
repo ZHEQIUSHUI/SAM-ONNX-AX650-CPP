@@ -10,7 +10,8 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
     std::string encoder_model_path = "/home/arno/workspace/projects/SegmentAnything-OnnxRunner/onnx_models/mobile_sam_encoder.onnx";
     std::string decoder_model_path = "/home/arno/workspace/projects/SegmentAnything-OnnxRunner/onnx_models/mobile_sam_decoder.onnx";
-    this->ui->label->InitModel(encoder_model_path, decoder_model_path);
+    std::string inpaint_model_path = "/home/arno/workspace/pycode/lama/big-lama-regular/big-lama-regular.onnx";
+    this->ui->label->InitModel(encoder_model_path, decoder_model_path,inpaint_model_path);
 }
 
 MainWindow::~MainWindow()
@@ -37,4 +38,14 @@ void MainWindow::on_ckb_boxprompt_stateChanged(int arg1)
 void MainWindow::on_ckb_realtime_decode_stateChanged(int arg1)
 {
     this->ui->label->SetRealtimeDecode(this->ui->ckb_realtime_decode->isChecked());
+}
+
+void MainWindow::on_btn_remove_obj_clicked()
+{
+    this->ui->label->ShowRemoveObject();
+}
+
+void MainWindow::on_btn_reset_clicked()
+{
+    this->ui->label->Reset();
 }

@@ -39,6 +39,7 @@ class ax_runner_base
 {
 protected:
     std::vector<ax_runner_tensor_t> mtensors;
+    std::vector<ax_runner_tensor_t> minput_tensors;
 
 public:
     virtual int init(const char *model_file) = 0;
@@ -46,6 +47,9 @@ public:
     virtual void deinit() = 0;
 
     int get_num_outputs() { return mtensors.size(); };
+
+    const ax_runner_tensor_t &get_input(int idx) { return minput_tensors[idx]; }
+    const ax_runner_tensor_t *get_inputs_ptr() { return minput_tensors.data(); }
 
     const ax_runner_tensor_t &get_output(int idx) { return mtensors[idx]; }
     const ax_runner_tensor_t *get_outputs_ptr() { return mtensors.data(); }
@@ -55,6 +59,7 @@ public:
     virtual ax_color_space_e get_color_space() = 0;
 
     virtual int inference(ax_image_t *pstFrame) = 0;
+    virtual int inference() = 0;
 
     int operator()(ax_image_t *pstFrame)
     {

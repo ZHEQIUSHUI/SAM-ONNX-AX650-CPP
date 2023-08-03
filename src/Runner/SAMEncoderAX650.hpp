@@ -28,14 +28,8 @@ public:
     int Inference(cv::Mat src, float &scale) override
     {
         scale = get_input_data_letterbox(src, input, InputHeight(), InputWidth(), true);
-        ax_image_t aximage;
-        aximage.nWidth = InputWidth();
-        aximage.nHeight = InputHeight();
-        aximage.pVir = input.data;
-        aximage.tStride_W = aximage.nWidth;
-
-        auto ret = model->inference(&aximage);
-
+        memcpy(model->get_input(0).pVirAddr, input.data, input.cols * input.rows * 3);
+        auto ret = model->inference();
         return ret;
     }
 
