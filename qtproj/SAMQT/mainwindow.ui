@@ -11,7 +11,10 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>Segment anything and Lama Inpaint</string>
+  </property>
+  <property name="documentMode">
+   <bool>false</bool>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout">
@@ -30,6 +33,9 @@
           </item>
           <item>
            <widget class="QCheckBox" name="ckb_realtime_decode">
+            <property name="toolTip">
+             <string>real time decode for sam</string>
+            </property>
             <property name="text">
              <string>LiveDecode</string>
             </property>
@@ -37,6 +43,9 @@
           </item>
           <item>
            <widget class="QCheckBox" name="ckb_boxprompt">
+            <property name="toolTip">
+             <string>draw box by mouse,and decode sam for the box</string>
+            </property>
             <property name="text">
              <string>BoxPrompt</string>
             </property>
@@ -46,6 +55,9 @@
         </item>
         <item>
          <widget class="QPushButton" name="btn_remove_obj">
+          <property name="toolTip">
+           <string>remove mask object and do sam encode in inpainted image</string>
+          </property>
           <property name="text">
            <string>RemoveObject</string>
           </property>
@@ -84,17 +96,6 @@
     </item>
    </layout>
   </widget>
-  <widget class="QMenuBar" name="menubar">
-   <property name="geometry">
-    <rect>
-     <x>0</x>
-     <y>0</y>
-     <width>870</width>
-     <height>20</height>
-    </rect>
-   </property>
-  </widget>
-  <widget class="QStatusBar" name="statusbar"/>
  </widget>
  <customwidgets>
   <customwidget>

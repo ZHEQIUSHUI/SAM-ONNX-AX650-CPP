@@ -3,6 +3,8 @@
 
 #include "QImage"
 #include "QFileDialog"
+#include "QMimeData"
+#include "QMessageBox"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow)
@@ -11,7 +13,9 @@ MainWindow::MainWindow(QWidget *parent)
     std::string encoder_model_path = "/home/arno/workspace/projects/SegmentAnything-OnnxRunner/onnx_models/mobile_sam_encoder.onnx";
     std::string decoder_model_path = "/home/arno/workspace/projects/SegmentAnything-OnnxRunner/onnx_models/mobile_sam_decoder.onnx";
     std::string inpaint_model_path = "/home/arno/workspace/pycode/lama/big-lama-regular/big-lama-regular.onnx";
-    this->ui->label->InitModel(encoder_model_path, decoder_model_path,inpaint_model_path);
+    this->ui->label->InitModel(encoder_model_path, decoder_model_path, inpaint_model_path);
+    this->setAcceptDrops(true);
+    // this->ui->label->setAcceptDrops(true);
 }
 
 MainWindow::~MainWindow()
@@ -27,7 +31,8 @@ void MainWindow::on_btn_read_image_clicked()
         return;
     }
     QImage img(filename);
-    this->ui->label->SetImage(img);
+    if (img.bits())
+        this->ui->label->SetImage(img);
 }
 
 void MainWindow::on_ckb_boxprompt_stateChanged(int arg1)
@@ -49,3 +54,36 @@ void MainWindow::on_btn_reset_clicked()
 {
     this->ui->label->Reset();
 }
+
+// void MainWindow::dragEnterEvent(QDragEnterEvent *event)
+//{
+//     if (event->mimeData()->hasUrls())
+//     {
+//         event->acceptProposedAction();
+//     }
+//     else
+//     {
+//         event->ignore();
+//     }
+// }
+// void MainWindow::dropEvent(QDropEvent *event)
+//{
+//     const QMimeData *mimeData = event->mimeData();
+
+//    if (!mimeData->hasUrls())
+//    {
+//        return;
+//    }
+
+//    QList<QUrl> urlList = mimeData->urls();
+
+//    QString filename = urlList.at(0).toLocalFile();
+//    if (filename.isEmpty())
+//    {
+//        return;
+//    }
+//    printf("open from drop:%s\n", filename.toStdString().c_str());
+//    QImage img(filename);
+//    if (img.bits())
+//        this->ui->label->SetImage(img);
+//}

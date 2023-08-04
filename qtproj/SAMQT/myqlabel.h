@@ -5,6 +5,7 @@
 #include <qimage.h>
 #include <QMouseEvent>
 #include "QDialog"
+#include "QMimeData"
 #include "libsam/src/Runner/SAM.hpp"
 #include "libsam/src/Runner/LamaInpaintOnnx.hpp"
 
@@ -29,6 +30,35 @@ private:
     QPoint pt_img_first, pt_img_secend;
     SAM mSam;
     LamaInpaintOnnx mInpaint;
+
+    void dragEnterEvent(QDragEnterEvent *event) override
+    {
+        if (event->mimeData()->hasUrls())
+            event->acceptProposedAction();
+        else
+            event->ignore();
+    }
+    void dropEvent(QDropEvent *event) override
+    {
+        const QMimeData *mimeData = event->mimeData();
+
+        if (!mimeData->hasUrls())
+        {
+            return;
+        }
+
+        QList<QUrl> urlList = mimeData->urls();
+
+        QString filename = urlList.at(0).toLocalFile();
+        if (filename.isEmpty())
+        {
+            return;
+        }
+        printf("open from drop:%s\n", filename.toStdString().c_str());
+        QImage img(filename);
+        if (img.bits())
+            SetImage(img);
+    }
 
     void mousePressEvent(QMouseEvent *e) override
     {
@@ -138,7 +168,7 @@ public:
         isRealtimeDecode = RealtimeDecode;
     }
 
-    void InitModel(std::string encoder_model, std::string decoder_model,std::string inpaint_model)
+    void InitModel(std::string encoder_model, std::string decoder_model, std::string inpaint_model)
     {
         mSam.Load(encoder_model, decoder_model);
         mInpaint.Load(inpaint_model);
@@ -146,15 +176,21 @@ public:
 
     void ShowRemoveObject()
     {
-        if(!cur_image.bits()||!grab_mask.data)
+        if (!cur_image.bits() || !grab_mask.data)
         {
             return;
         }
-        cv::Mat src(cur_image.height(), cur_image.width(), CV_8UC(cur_image.format()==QImage::Format_BGR888?3:4), cur_image.bits());
+        int channel = cur_image.format() == QImage::Format_BGR888 ? 3 : 4;
+        int stride = cur_image.bytesPerLine();
+        cv::Mat src(cur_image.height(), cur_image.width(), CV_8UC(channel), cur_image.bits(), stride);
         cv::Mat rgb;
-        cv::cvtColor(src, rgb, cv::COLOR_RGBA2RGB);
-        cv::Mat inpainted = mInpaint.Inpaint(rgb,grab_mask);
-        QImage qinpainted(inpainted.data,inpainted.cols,inpainted.rows,QImage::Format_BGR888);
+        if(channel==3)
+            src.copyTo(rgb);
+        else if(channel==4)
+            cv::cvtColor(src, rgb, cv::COLOR_RGBA2RGB);
+        cv::Mat inpainted = mInpaint.Inpaint(rgb, grab_mask);
+        mSam.Encode(inpainted);
+        QImage qinpainted(inpainted.data, inpainted.cols, inpainted.rows, inpainted.step1(),QImage::Format_BGR888);
         cur_image = qinpainted.copy();
         cur_mask = QImage();
         pt_img_first = QPoint(-10000, -10000);
