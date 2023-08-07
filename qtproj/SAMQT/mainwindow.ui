@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>870</width>
-    <height>461</height>
+    <width>820</width>
+    <height>482</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -26,6 +26,12 @@
          <layout class="QVBoxLayout" name="verticalLayout">
           <item>
            <widget class="QPushButton" name="btn_read_image">
+            <property name="styleSheet">
+             <string notr="true">QPushButton{background-color: rgb(225, 225, 225);border:2px groove gray;border-radius:10px;padding:2px 4px;border-style: outset;}
+QPushButton:hover{background-color:rgb(229, 241, 251); color: black;}
+QPushButton:pressed{background-color:rgb(100, 228, 100);border-style: inset;}
+</string>
+            </property>
             <property name="text">
              <string>ReadImage</string>
             </property>
@@ -58,6 +64,12 @@
           <property name="toolTip">
            <string>remove mask object and do sam encode in inpainted image</string>
           </property>
+          <property name="styleSheet">
+           <string notr="true">QPushButton{background-color: rgb(225, 225, 225);border:2px groove gray;border-radius:10px;padding:2px 4px;border-style: outset;}
+QPushButton:hover{background-color:rgb(229, 241, 251); color: black;}
+QPushButton:pressed{background-color:rgb(100, 228, 100);border-style: inset;}
+</string>
+          </property>
           <property name="text">
            <string>RemoveObject</string>
           </property>
@@ -65,6 +77,12 @@
         </item>
         <item>
          <widget class="QPushButton" name="btn_reset">
+          <property name="styleSheet">
+           <string notr="true">QPushButton{background-color: rgb(225, 225, 225);border:2px groove gray;border-radius:10px;padding:2px 4px;border-style: outset;}
+QPushButton:hover{background-color:rgb(229, 241, 251); color: black;}
+QPushButton:pressed{background-color:rgb(100, 228, 100);border-style: inset;}
+</string>
+          </property>
           <property name="text">
            <string>Reset</string>
           </property>

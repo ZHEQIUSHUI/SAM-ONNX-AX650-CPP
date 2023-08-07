@@ -14,8 +14,8 @@ public:
         model.reset(new ax_runner_ax650);
         model->init(model_file.c_str());
         auto output = model->get_input(0);
-        width = output.vShape[3];
-        height = output.vShape[2];
+        width = output.vShape[2];
+        height = output.vShape[1];
         return 0;
     }
 

@@ -19,3 +19,6 @@ data/
 onnx_models
 axpi_pro_bsp_sdk
 third_party/opencv-mobile-*
+third_party/*.zip
+third_party/*.onnx
+third_party/*.axmodel

@@ -88,6 +88,8 @@ private:
 
     void samDecode()
     {
+        if (cur_image.isNull())
+            return;
         if (isBoxPrompt)
         {
             v_mask = mSam.Decode(cv::Rect(cv::Point(pt_img_first.x(), pt_img_first.y()), cv::Point(pt_img_secend.x(), pt_img_secend.y())));
@@ -184,13 +186,13 @@ public:
         int stride = cur_image.bytesPerLine();
         cv::Mat src(cur_image.height(), cur_image.width(), CV_8UC(channel), cur_image.bits(), stride);
         cv::Mat rgb;
-        if(channel==3)
+        if (channel == 3)
             src.copyTo(rgb);
-        else if(channel==4)
+        else if (channel == 4)
             cv::cvtColor(src, rgb, cv::COLOR_RGBA2RGB);
         cv::Mat inpainted = mInpaint.Inpaint(rgb, grab_mask);
         mSam.Encode(inpainted);
-        QImage qinpainted(inpainted.data, inpainted.cols, inpainted.rows, inpainted.step1(),QImage::Format_BGR888);
+        QImage qinpainted(inpainted.data, inpainted.cols, inpainted.rows, inpainted.step1(), QImage::Format_BGR888);
         cur_image = qinpainted.copy();
         cur_mask = QImage();
         pt_img_first = QPoint(-10000, -10000);
