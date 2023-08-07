@@ -27,8 +27,9 @@ Decoder Inference Cost time : 0.438249s
 0.98
 0.91
 ```
-<center><img src="results/result_0.jpg" width="170" /><img src="results/result_1.jpg" width="170" /><img src="results/result_2.jpg" width="170" /><img src="results/result_3.jpg" width="170" /></center>
-<center><img src="results/rect_result_0.jpg" width="170" /><img src="results/rect_result_1.jpg" width="170" /><img src="results/rect_result_2.jpg" width="170" /><img src="results/rect_result_3.jpg" width="170" /></center>
+<img src="results/result_0.jpg" height="135" /><img src="results/result_1.jpg" height="135" /><img src="results/result_2.jpg" height="135" /><img src="results/result_3.jpg" height="135" />
+
+<img src="results/rect_result_0.jpg" height="135" /><img src="results/rect_result_1.jpg" height="135" /><img src="results/rect_result_2.jpg" height="135" /><img src="results/rect_result_3.jpg" height="135" />
 
 
 ### Inpaint
@@ -44,7 +45,7 @@ Engine alloc io is done.
 [I][                            init][ 275]: RGB MODEL
 Inpaint Inference Cost time : 0.582908s
 ```
-<center><img src="test.jpg"  width="220"/><img src="results/result_1.jpg" width="220" /><img src="results/inpainted.jpg" width="220" /></center>
+<img src="test.jpg"  height="180"/><img src="results/result_1.jpg" height="180" /><img src="results/inpainted.jpg" height="180" />
 
 ## Reference
 [segment-anything](https://github.com/facebookresearch/segment-anything)\
