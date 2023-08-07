@@ -43,5 +43,5 @@ protected:
 
 public:
     virtual int Load(std::string model_file) = 0;
-    virtual cv::Mat Inpaint(cv::Mat image, cv::Mat mask) = 0;
+    virtual cv::Mat Inpaint(cv::Mat image, cv::Mat mask, int dilate_size) = 0;
 };

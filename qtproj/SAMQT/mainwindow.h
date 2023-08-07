@@ -20,13 +20,15 @@ public:
 private slots:
     void on_btn_read_image_clicked();
 
-    void on_ckb_boxprompt_stateChanged(int arg1);
-
     void on_ckb_realtime_decode_stateChanged(int arg1);
 
     void on_btn_remove_obj_clicked();
 
     void on_btn_reset_clicked();
+
+    void on_radioButton_point_clicked();
+
+    void on_radioButton_box_clicked();
 
 private:
     Ui::MainWindow *ui;

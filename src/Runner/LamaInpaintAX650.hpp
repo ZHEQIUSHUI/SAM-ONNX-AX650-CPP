@@ -19,9 +19,9 @@ public:
         return 0;
     }
 
-    cv::Mat Inpaint(cv::Mat image, cv::Mat mask) override
+    cv::Mat Inpaint(cv::Mat image, cv::Mat mask, int dilate_size) override
     {
-        cv::dilate(mask, mask, cv::getStructuringElement(0, cv::Size(11, 11)));
+        cv::dilate(mask, mask, cv::getStructuringElement(0, cv::Size(dilate_size, dilate_size)));
         float scale = get_input_data_letterbox(image, letterbox_img, height, width, false);
         get_input_data_letterbox(mask, letterbox_mask, height, width, false);
 

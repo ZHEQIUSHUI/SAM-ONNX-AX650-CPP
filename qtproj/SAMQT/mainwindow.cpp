@@ -5,6 +5,7 @@
 #include "QFileDialog"
 #include "QMimeData"
 #include "QMessageBox"
+#include "QIntValidator"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow)
@@ -15,6 +16,7 @@ MainWindow::MainWindow(QWidget *parent)
     std::string inpaint_model_path = "/home/arno/workspace/pycode/lama/big-lama-regular/big-lama-regular.onnx";
     this->ui->label->InitModel(encoder_model_path, decoder_model_path, inpaint_model_path);
     this->setAcceptDrops(true);
+    this->ui->txt_dilate->setValidator(new QIntValidator(this->ui->txt_dilate));
     // this->ui->label->setAcceptDrops(true);
 }
 
@@ -35,11 +37,6 @@ void MainWindow::on_btn_read_image_clicked()
         this->ui->label->SetImage(img);
 }
 
-void MainWindow::on_ckb_boxprompt_stateChanged(int arg1)
-{
-    this->ui->label->SetBoxPrompt(this->ui->ckb_boxprompt->isChecked());
-}
-
 void MainWindow::on_ckb_realtime_decode_stateChanged(int arg1)
 {
     this->ui->label->SetRealtimeDecode(this->ui->ckb_realtime_decode->isChecked());
@@ -47,7 +44,20 @@ void MainWindow::on_ckb_realtime_decode_stateChanged(int arg1)
 
 void MainWindow::on_btn_remove_obj_clicked()
 {
-    this->ui->label->ShowRemoveObject();
+    int dilate_size = 11;
+    bool ok;
+    dilate_size = this->ui->txt_dilate->text().toUInt(&ok);
+    if (!ok)
+        dilate_size = 11;
+    if (dilate_size % 2 == 0)
+    {
+        dilate_size += 1;
+    }
+    if (dilate_size > 111)
+        dilate_size = 111;
+    if (dilate_size < 5)
+        dilate_size = 5;
+    this->ui->label->ShowRemoveObject(dilate_size);
 }
 
 void MainWindow::on_btn_reset_clicked()
@@ -87,3 +97,13 @@ void MainWindow::on_btn_reset_clicked()
 //    if (img.bits())
 //        this->ui->label->SetImage(img);
 //}
+
+void MainWindow::on_radioButton_point_clicked()
+{
+    this->ui->label->SetBoxPrompt(this->ui->radioButton_box->isChecked());
+}
+
+void MainWindow::on_radioButton_box_clicked()
+{
+     this->ui->label->SetBoxPrompt(this->ui->radioButton_box->isChecked());
+}

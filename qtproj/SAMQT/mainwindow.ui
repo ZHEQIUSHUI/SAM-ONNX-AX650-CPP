@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>820</width>
-    <height>482</height>
+    <width>737</width>
+    <height>515</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -48,45 +48,95 @@ QPushButton:pressed{background-color:rgb(100, 228, 100);border-style: inset;}
            </widget>
           </item>
           <item>
-           <widget class="QCheckBox" name="ckb_boxprompt">
+           <layout class="QVBoxLayout" name="verticalLayout_3">
+            <item>
+             <widget class="QRadioButton" name="radioButton_point">
+              <property name="text">
+               <string>Point</string>
+              </property>
+              <property name="checked">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QRadioButton" name="radioButton_box">
+              <property name="text">
+               <string>Box</string>
+              </property>
+              <property name="checked">
+               <bool>false</bool>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_2">
+            <item>
+             <widget class="QLabel" name="label_2">
+              <property name="text">
+               <string>Dilate</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLineEdit" name="txt_dilate">
+              <property name="minimumSize">
+               <size>
+                <width>30</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>50</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="toolTip">
+               <string>mask dilate size</string>
+              </property>
+              <property name="text">
+               <string>11</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <widget class="QPushButton" name="btn_remove_obj">
             <property name="toolTip">
-             <string>draw box by mouse,and decode sam for the box</string>
+             <string>remove mask object and do sam encode in inpainted image</string>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">QPushButton{background-color: rgb(225, 225, 225);border:2px groove gray;border-radius:10px;padding:2px 4px;border-style: outset;}
+QPushButton:hover{background-color:rgb(229, 241, 251); color: black;}
+QPushButton:pressed{background-color:rgb(100, 228, 100);border-style: inset;}
+</string>
             </property>
             <property name="text">
-             <string>BoxPrompt</string>
+             <string>RemoveObject</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="btn_reset">
+            <property name="styleSheet">
+             <string notr="true">QPushButton{background-color: rgb(225, 225, 225);border:2px groove gray;border-radius:10px;padding:2px 4px;border-style: outset;}
+QPushButton:hover{background-color:rgb(229, 241, 251); color: black;}
+QPushButton:pressed{background-color:rgb(100, 228, 100);border-style: inset;}
+</string>
+            </property>
+            <property name="text">
+             <string>Reset</string>
             </property>
            </widget>
           </item>
          </layout>
-        </item>
-        <item>
-         <widget class="QPushButton" name="btn_remove_obj">
-          <property name="toolTip">
-           <string>remove mask object and do sam encode in inpainted image</string>
-          </property>
-          <property name="styleSheet">
-           <string notr="true">QPushButton{background-color: rgb(225, 225, 225);border:2px groove gray;border-radius:10px;padding:2px 4px;border-style: outset;}
-QPushButton:hover{background-color:rgb(229, 241, 251); color: black;}
-QPushButton:pressed{background-color:rgb(100, 228, 100);border-style: inset;}
-</string>
-          </property>
-          <property name="text">
-           <string>RemoveObject</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="btn_reset">
-          <property name="styleSheet">
-           <string notr="true">QPushButton{background-color: rgb(225, 225, 225);border:2px groove gray;border-radius:10px;padding:2px 4px;border-style: outset;}
-QPushButton:hover{background-color:rgb(229, 241, 251); color: black;}
-QPushButton:pressed{background-color:rgb(100, 228, 100);border-style: inset;}
-</string>
-          </property>
-          <property name="text">
-           <string>Reset</string>
-          </property>
-         </widget>
         </item>
         <item>
          <spacer name="verticalSpacer">

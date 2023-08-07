@@ -176,7 +176,7 @@ public:
         mInpaint.Load(inpaint_model);
     }
 
-    void ShowRemoveObject()
+    void ShowRemoveObject(int dilate_size)
     {
         if (!cur_image.bits() || !grab_mask.data)
         {
@@ -190,7 +190,7 @@ public:
             src.copyTo(rgb);
         else if (channel == 4)
             cv::cvtColor(src, rgb, cv::COLOR_RGBA2RGB);
-        cv::Mat inpainted = mInpaint.Inpaint(rgb, grab_mask);
+        cv::Mat inpainted = mInpaint.Inpaint(rgb, grab_mask, dilate_size);
         mSam.Encode(inpainted);
         QImage qinpainted(inpainted.data, inpainted.cols, inpainted.rows, inpainted.step1(), QImage::Format_BGR888);
         cur_image = qinpainted.copy();
@@ -204,6 +204,7 @@ public:
     {
         cur_image = bak_image.copy();
         cur_mask = QImage();
+        grab_mask = cv::Mat();
         pt_img_first = QPoint(-10000, -10000);
         pt_img_secend = QPoint(-10000, -10000);
         repaint();

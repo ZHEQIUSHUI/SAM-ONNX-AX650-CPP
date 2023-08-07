@@ -44,7 +44,7 @@ int main(int argc, char *argv[])
 
     mInpaint->Load(model_path);
     auto time_start = std::chrono::high_resolution_clock::now();
-    auto inpainted = mInpaint->Inpaint(src, mask);
+    auto inpainted = mInpaint->Inpaint(src, mask, 11);
     auto time_end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> diff = time_end - time_start;
     std::cout << "Inpaint Inference Cost time : " << diff.count() << "s" << std::endl;
