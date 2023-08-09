@@ -42,11 +42,13 @@ else()
     mainwindow.h
     myqlabel.h
     mainwindow.ui
+    style/DarkStyle.cpp
+    style/DarkStyle.h
   )
 endif()
 
 target_link_libraries(SAMQT PRIVATE Qt5::Widgets)
-
+include_directories(style)
 include_directories(${ONNXRUNTIME_DIR}/include)
 target_link_directories(SAMQT PRIVATE ${ONNXRUNTIME_DIR}/lib)
 
