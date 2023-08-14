@@ -6,6 +6,7 @@
 #include <QMouseEvent>
 #include "QDialog"
 #include "QMimeData"
+#include "QProgressBar"
 #include "libsam/src/Runner/SAM.hpp"
 #include "libsam/src/Runner/LamaInpaintOnnx.hpp"
 
@@ -20,9 +21,13 @@ Q_SIGNALS:
 private:
     QImage bak_image;
     QImage cur_image;
-    QImage cur_mask;
-    cv::Mat rgba_mask;
-    cv::Mat grab_mask;
+
+    QVector<QImage> cur_masks;
+    cv::Scalar cur_color_preview;
+    QImage cur_mask_preview;
+    QVector<cv::Mat> rgba_masks;
+    QVector<cv::Mat> grab_masks;
+
     std::vector<MatInfo> v_mask;
     bool isBoxPrompt = false;
     bool isRealtimeDecode = false;
@@ -62,17 +67,34 @@ private:
 
     void mousePressEvent(QMouseEvent *e) override
     {
-        pt_img_first = pt_img_secend = getSourcePoint(this->size(), cur_image.size(), e->pos());
-        mouseHolding = true;
-        repaint();
+        if (e->button() == Qt::RightButton)
+        {
+        }
+        else if (e->button() == Qt::LeftButton)
+        {
+            cur_color_preview = cv::Scalar(qrand() % 255, qrand() % 255, qrand() % 255, 200);
+            pt_img_first = pt_img_secend = getSourcePoint(this->size(), cur_image.size(), e->pos());
+            mouseHolding = true;
+            repaint();
+        }
     }
 
     void mouseReleaseEvent(QMouseEvent *e) override
     {
-        pt_img_secend = getSourcePoint(this->size(), cur_image.size(), e->pos());
-        mouseHolding = false;
-        samDecode();
-        repaint();
+        if (e->button() == Qt::RightButton)
+        {
+            pt_img_first = QPoint(-10000, -10000);
+            pt_img_secend = QPoint(-10000, -10000);
+            RemoveLastMask();
+            repaint();
+        }
+        else if (e->button() == Qt::LeftButton)
+        {
+            pt_img_secend = getSourcePoint(this->size(), cur_image.size(), e->pos());
+            mouseHolding = false;
+            samDecode(true);
+            repaint();
+        }
     }
 
     void mouseMoveEvent(QMouseEvent *e) override
@@ -81,12 +103,12 @@ private:
         {
             pt_img_secend = getSourcePoint(this->size(), cur_image.size(), e->pos());
             if (isRealtimeDecode)
-                samDecode();
+                samDecode(false);
             repaint();
         }
     }
 
-    void samDecode()
+    void samDecode(bool push = true)
     {
         if (cur_image.isNull())
             return;
@@ -108,10 +130,22 @@ private:
                 maxid = i;
             }
         }
-        grab_mask = v_mask[maxid].mask.clone();
-        rgba_mask = cv::Mat(v_mask[maxid].mask.rows, v_mask[maxid].mask.cols, CV_8UC4, cv::Scalar(0, 0, 0, 0));
-        rgba_mask.setTo(cv::Scalar(200, 200, 0, 200), v_mask[maxid].mask);
-        cur_mask = QImage(rgba_mask.data, rgba_mask.cols, rgba_mask.rows, QImage::Format_RGBA8888);
+        auto grab_mask = v_mask[maxid].mask.clone();
+        auto rgba_mask = cv::Mat(v_mask[maxid].mask.rows, v_mask[maxid].mask.cols, CV_8UC4, cv::Scalar(0, 0, 0, 0));
+        rgba_mask.setTo(cur_color_preview, v_mask[maxid].mask);
+        auto cur_mask = QImage(rgba_mask.data, rgba_mask.cols, rgba_mask.rows, QImage::Format_RGBA8888);
+
+        if (push)
+        {
+            grab_masks.push_back(grab_mask);
+            rgba_masks.push_back(rgba_mask);
+            cur_masks.push_back(cur_mask);
+            cur_mask_preview = QImage();
+        }
+        else
+        {
+            cur_mask_preview = cur_mask.copy();
+        }
     }
 
     QRect getTargetRect(QImage img)
@@ -123,7 +157,10 @@ private:
     {
         QPainter p(this);
         p.drawImage(getTargetRect(cur_image), cur_image);
-        p.drawImage(getTargetRect(cur_image), cur_mask);
+        for (auto cur_mask : cur_masks)
+            p.drawImage(getTargetRect(cur_image), cur_mask);
+        if (cur_mask_preview.bits())
+            p.drawImage(getTargetRect(cur_image), cur_mask_preview);
         QColor color(0, 255, 0, 200);
         p.setPen(QPen(color, 3));
         if (isBoxPrompt)
@@ -144,7 +181,9 @@ public:
 
     void SetImage(QImage img)
     {
-        cur_mask = QImage();
+        cur_masks.clear();
+        rgba_masks.clear();
+        grab_masks.clear();
         pt_img_first = QPoint(-10000, -10000);
         pt_img_secend = QPoint(-10000, -10000);
         cur_image = img;
@@ -159,7 +198,9 @@ public:
     void SetBoxPrompt(bool useBoxprompt)
     {
         isBoxPrompt = useBoxprompt;
-        cur_mask = QImage();
+        cur_masks.clear();
+        rgba_masks.clear();
+        grab_masks.clear();
         pt_img_first = QPoint(-10000, -10000);
         pt_img_secend = QPoint(-10000, -10000);
         repaint();
@@ -176,9 +217,9 @@ public:
         mInpaint.Load(inpaint_model);
     }
 
-    void ShowRemoveObject(int dilate_size)
+    void ShowRemoveObject(int dilate_size, QProgressBar *bar)
     {
-        if (!cur_image.bits() || !grab_mask.data)
+        if (!cur_image.bits() || !grab_masks.size())
         {
             return;
         }
@@ -190,24 +231,47 @@ public:
             src.copyTo(rgb);
         else if (channel == 4)
             cv::cvtColor(src, rgb, cv::COLOR_RGBA2RGB);
-        cv::Mat inpainted = mInpaint.Inpaint(rgb, grab_mask, dilate_size);
-        mSam.Encode(inpainted);
-        QImage qinpainted(inpainted.data, inpainted.cols, inpainted.rows, inpainted.step1(), QImage::Format_BGR888);
-        cur_image = qinpainted.copy();
-        cur_mask = QImage();
+
         pt_img_first = QPoint(-10000, -10000);
         pt_img_secend = QPoint(-10000, -10000);
-        repaint();
+        cv::Mat inpainted = rgb;
+        if (bar)
+        {
+            bar->setValue(0);
+            bar->setMinimum(0);
+            bar->setMaximum(grab_masks.size());
+        }
+        for (auto grab_mask : grab_masks)
+        {
+            inpainted = mInpaint.Inpaint(inpainted, grab_mask, dilate_size);
+            QImage qinpainted(inpainted.data, inpainted.cols, inpainted.rows, inpainted.step1(), QImage::Format_BGR888);
+            cur_image = qinpainted.copy();
+            if (cur_masks.size())
+                cur_masks.removeFirst();
+            repaint();
+            if (bar)
+                bar->setValue(bar->value() + 1);
+        }
+        cur_masks.clear();
+        rgba_masks.clear();
+        grab_masks.clear();
+        mSam.Encode(inpainted);
     }
 
     void Reset()
     {
         cur_image = bak_image.copy();
-        cur_mask = QImage();
-        grab_mask = cv::Mat();
-        pt_img_first = QPoint(-10000, -10000);
-        pt_img_secend = QPoint(-10000, -10000);
-        repaint();
+        SetImage(cur_image);
+    }
+
+    void RemoveLastMask()
+    {
+        if (cur_masks.size())
+            cur_masks.removeLast();
+        if (rgba_masks.size())
+            rgba_masks.removeLast();
+        if (grab_masks.size())
+            grab_masks.removeLast();
     }
 
     static QPoint getSourcePoint(QSize window, QSize img, QPoint pt)

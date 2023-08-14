@@ -44,6 +44,8 @@ void MainWindow::on_ckb_realtime_decode_stateChanged(int arg1)
 
 void MainWindow::on_btn_remove_obj_clicked()
 {
+    this->setEnabled(false);
+    repaint();
     int dilate_size = 11;
     bool ok;
     dilate_size = this->ui->txt_dilate->text().toUInt(&ok);
@@ -57,7 +59,8 @@ void MainWindow::on_btn_remove_obj_clicked()
         dilate_size = 111;
     if (dilate_size < 5)
         dilate_size = 5;
-    this->ui->label->ShowRemoveObject(dilate_size);
+    this->ui->label->ShowRemoveObject(dilate_size, this->ui->progressBar_remove_obj);
+    this->setEnabled(true);
 }
 
 void MainWindow::on_btn_reset_clicked()
@@ -105,5 +108,5 @@ void MainWindow::on_radioButton_point_clicked()
 
 void MainWindow::on_radioButton_box_clicked()
 {
-     this->ui->label->SetBoxPrompt(this->ui->radioButton_box->isChecked());
+    this->ui->label->SetBoxPrompt(this->ui->radioButton_box->isChecked());
 }

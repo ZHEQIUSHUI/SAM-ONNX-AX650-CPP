@@ -106,11 +106,24 @@
           </item>
           <item>
            <widget class="QPushButton" name="btn_remove_obj">
+            <property name="enabled">
+             <bool>true</bool>
+            </property>
             <property name="toolTip">
              <string>remove mask object and do sam encode in inpainted image</string>
             </property>
             <property name="text">
              <string>RemoveObject</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QProgressBar" name="progressBar_remove_obj">
+            <property name="maximum">
+             <number>10</number>
+            </property>
+            <property name="value">
+             <number>0</number>
             </property>
            </widget>
           </item>
