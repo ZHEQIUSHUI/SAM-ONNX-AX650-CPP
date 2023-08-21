@@ -44,7 +44,7 @@ Engine alloc io is done.
 [I][                            init][ 275]: RGB MODEL
 Inpaint Inference Cost time : 0.582908s
 ```
-<img src="test.jpg"  height="180"/><img src="results/result_1.jpg" height="180" /><img src="results/inpainted.jpg" height="180" />
+<img src="images/test.jpg"  height="180"/><img src="results/result_1.jpg" height="180" /><img src="results/inpainted.jpg" height="180" />
 
 ## Reference
 [segment-anything](https://github.com/facebookresearch/segment-anything)\
