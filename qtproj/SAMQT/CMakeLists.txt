@@ -26,7 +26,14 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/libsam)
 
-find_package(Qt5 COMPONENTS Widgets REQUIRED)
+find_package(Qt6 COMPONENTS Widgets)
+if(Qt6_FOUND)
+  set(QTWidget Qt6::Widgets)
+else()
+  find_package(Qt5 COMPONENTS Widgets REQUIRED)
+  set(QTWidget Qt5::Widgets)
+endif()
+
 
 if(ANDROID)
   add_library(SAMQT SHARED
@@ -47,7 +54,7 @@ else()
   )
 endif()
 
-target_link_libraries(SAMQT PRIVATE Qt5::Widgets)
+target_link_libraries(SAMQT PRIVATE ${QTWidget})
 include_directories(style)
 include_directories(${ONNXRUNTIME_DIR}/include)
 target_link_directories(SAMQT PRIVATE ${ONNXRUNTIME_DIR}/lib)
@@ -58,3 +65,8 @@ include_directories(${OpenCV_INCLUDE_DIRS})
 target_link_libraries(SAMQT PRIVATE sam)
 target_link_libraries(SAMQT PRIVATE ${OpenCV_LIBS})
 target_link_libraries(SAMQT PRIVATE gomp onnxruntime)
+
+if(BUILD_WITH_AX650)
+    target_link_directories(SAMQT PRIVATE ${BSP_MSP_DIR}/lib)
+    target_link_libraries(SAMQT PRIVATE ax_engine ax_interpreter ax_sys ax_ivps)
+endif()

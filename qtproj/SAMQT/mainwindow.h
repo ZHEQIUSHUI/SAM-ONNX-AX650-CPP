@@ -14,7 +14,7 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    MainWindow(QWidget *parent = nullptr);
+    MainWindow(std::string encoder_model_path, std::string decoder_model_path, std::string inpaint_model_path, QWidget *parent = nullptr);
     ~MainWindow();
 
 private slots:

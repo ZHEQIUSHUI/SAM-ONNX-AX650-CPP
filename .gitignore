@@ -16,6 +16,7 @@ data/
 *.pdb
 
 # model
+ax_models
 onnx_models
 axpi_pro_bsp_sdk
 third_party/opencv-mobile-*

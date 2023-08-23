@@ -7,13 +7,10 @@
 #include "QMessageBox"
 #include "QIntValidator"
 
-MainWindow::MainWindow(QWidget *parent)
+MainWindow::MainWindow(std::string encoder_model_path,std::string decoder_model_path,std::string inpaint_model_path , QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-    std::string encoder_model_path = "/home/arno/workspace/projects/SegmentAnything-OnnxRunner/onnx_models/mobile_sam_encoder.onnx";
-    std::string decoder_model_path = "/home/arno/workspace/projects/SegmentAnything-OnnxRunner/onnx_models/mobile_sam_decoder.onnx";
-    std::string inpaint_model_path = "/home/arno/workspace/pycode/lama/big-lama-regular/big-lama-regular.onnx";
     this->ui->label->InitModel(encoder_model_path, decoder_model_path, inpaint_model_path);
     this->setAcceptDrops(true);
     this->ui->txt_dilate->setValidator(new QIntValidator(this->ui->txt_dilate));

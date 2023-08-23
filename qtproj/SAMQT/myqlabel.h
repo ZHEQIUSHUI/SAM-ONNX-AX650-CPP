@@ -9,6 +9,7 @@
 #include "QProgressBar"
 #include "libsam/src/Runner/SAM.hpp"
 #include "libsam/src/Runner/LamaInpaintOnnx.hpp"
+#include "libsam/src/Runner/LamaInpaintAX650.hpp"
 
 class myQLabel : public QLabel
 {
@@ -34,7 +35,8 @@ private:
     bool mouseHolding = false;
     QPoint pt_img_first, pt_img_secend;
     SAM mSam;
-    LamaInpaintOnnx mInpaint;
+//    LamaInpaintOnnx mInpaint;
+    std::shared_ptr<LamaInpaint> mInpaint;
 
     void dragEnterEvent(QDragEnterEvent *event) override
     {
@@ -72,7 +74,7 @@ private:
         }
         else if (e->button() == Qt::LeftButton)
         {
-            cur_color_preview = cv::Scalar(qrand() % 255, qrand() % 255, qrand() % 255, 200);
+            cur_color_preview = cv::Scalar(rand() % 255, rand() % 255, rand() % 255, 200);
             pt_img_first = pt_img_secend = getSourcePoint(this->size(), cur_image.size(), e->pos());
             mouseHolding = true;
             repaint();
@@ -214,7 +216,21 @@ public:
     void InitModel(std::string encoder_model, std::string decoder_model, std::string inpaint_model)
     {
         mSam.Load(encoder_model, decoder_model);
-        mInpaint.Load(inpaint_model);
+//        mInpaint.Load(inpaint_model);
+
+        if (string_utility<std::string>::ends_with(inpaint_model, ".onnx"))
+        {
+            mInpaint.reset(new LamaInpaintOnnx);
+        }
+        else if (string_utility<std::string>::ends_with(inpaint_model, ".axmodel"))
+        {
+            mInpaint.reset(new LamaInpaintAX650);
+        }
+        else
+        {
+            fprintf(stderr, "no impl for %s\n", inpaint_model.c_str());
+        }
+        mInpaint->Load(inpaint_model);
     }
 
     void ShowRemoveObject(int dilate_size, QProgressBar *bar)
@@ -243,7 +259,11 @@ public:
         }
         for (auto grab_mask : grab_masks)
         {
-            inpainted = mInpaint.Inpaint(inpainted, grab_mask, dilate_size);
+            auto time_start = std::chrono::high_resolution_clock::now();
+            inpainted = mInpaint->Inpaint(inpainted, grab_mask, dilate_size);
+            auto time_end = std::chrono::high_resolution_clock::now();
+            std::chrono::duration<double> diff = time_end - time_start;
+            std::cout << "Inpaint Inference Cost time : " << diff.count() << "s" << std::endl;
             QImage qinpainted(inpainted.data, inpainted.cols, inpainted.rows, inpainted.step1(), QImage::Format_BGR888);
             cur_image = qinpainted.copy();
             if (cur_masks.size())
