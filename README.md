@@ -1,6 +1,6 @@
 # Inpaint Anything
 
-https://github.com/ZHEQIUSHUI/SAM-AX650/assets/46700201/35fbb3d0-d92c-42e2-ba0f-95b848ffb127
+https://github.com/ZHEQIUSHUI/SAM-ONNX-AX650-CPP/assets/46700201/82b35088-7e9c-46b8-980f-bc9a3bc9996c
 
 ## Usage
 
