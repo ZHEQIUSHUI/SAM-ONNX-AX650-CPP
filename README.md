@@ -2,6 +2,41 @@
 
 https://github.com/ZHEQIUSHUI/SAM-ONNX-AX650-CPP/assets/46700201/82b35088-7e9c-46b8-980f-bc9a3bc9996c
 
+## Build
+```bash
+mkdir build
+cd build
+```
+if x86 onnxruntime
+```bash
+cmake -DONNXRUNTIME_DIR=${onnxruntime_dir} -DOpenCV_DIR=${opencv_cmake_file_dir} ..
+```
+else if ax650
+```bash
+cmake -DONNXRUNTIME_DIR=${onnxruntime_dir} -DOpenCV_DIR=${opencv_cmake_file_dir} -DBSP_MSP_DIR=${msp_out_dir} -DBUILD_WITH_AX650=ON ..
+```
+```bash
+make -j4
+```
+
+### Build with QT
+
+```bash
+cd qtproj
+mkdir build
+```
+build for x86 (for example qt5.14.2,ubuntu 20.04,you need to download opencv and onnxruntime)
+```bash
+cmake -DONNXRUNTIME_DIR=${onnxruntime_dir} -DOpenCV_DIR=${opencv_cmake_file_dir} -DQt5_DIR=${qt5_dir}/5.14.2/gcc_64/lib/cmake/Qt5  ../SAMQT/
+```
+build for AX650 on board(爱芯派pro，you need to download opencv onnxruntime in this repos releases)
+```bash
+apt install cmake qt6-base-dev qtcreator
+cmake -DONNXRUNTIME_DIR=${onnxruntime_dir} -DOpenCV_DIR=${opencv_cmake_file_dir} -DBSP_MSP_DIR=${msp_out_dir} -DBUILD_WITH_AX650=ON ../SAMQT/
+```
+```
+make -j4
+```
 ## Usage
 
 ![](test.jpg)
