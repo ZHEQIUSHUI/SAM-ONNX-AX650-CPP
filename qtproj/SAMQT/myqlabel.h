@@ -181,6 +181,11 @@ public:
     {
     }
 
+    QImage getCurrentImage()
+    {
+        return cur_image;
+    }
+
     void SetImage(QImage img)
     {
         cur_masks.clear();

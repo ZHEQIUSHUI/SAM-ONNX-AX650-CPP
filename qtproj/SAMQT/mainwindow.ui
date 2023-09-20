@@ -134,6 +134,13 @@
             </property>
            </widget>
           </item>
+          <item>
+           <widget class="QPushButton" name="btn_save_img">
+            <property name="text">
+             <string>SaveImage</string>
+            </property>
+           </widget>
+          </item>
          </layout>
         </item>
         <item>

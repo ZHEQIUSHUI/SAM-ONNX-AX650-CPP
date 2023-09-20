@@ -30,6 +30,8 @@ private slots:
 
     void on_radioButton_box_clicked();
 
+    void on_btn_save_img_clicked();
+
 private:
     Ui::MainWindow *ui;
 };

@@ -7,7 +7,7 @@
 #include "QMessageBox"
 #include "QIntValidator"
 
-MainWindow::MainWindow(std::string encoder_model_path,std::string decoder_model_path,std::string inpaint_model_path , QWidget *parent)
+MainWindow::MainWindow(std::string encoder_model_path, std::string decoder_model_path, std::string inpaint_model_path, QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
@@ -106,4 +106,28 @@ void MainWindow::on_radioButton_point_clicked()
 void MainWindow::on_radioButton_box_clicked()
 {
     this->ui->label->SetBoxPrompt(this->ui->radioButton_box->isChecked());
+}
+
+void MainWindow::on_btn_save_img_clicked()
+{
+    auto cur_image = this->ui->label->getCurrentImage();
+
+    QString filename = QFileDialog::getSaveFileName(this,
+                                                    tr("Save Image"),
+                                                    "",
+                                                    tr("*.bmp;; *.png;; *.jpg")); // 选择路径
+    if (filename.isEmpty())
+    {
+        return;
+    }
+    else
+    {
+        if (!(cur_image.save(filename))) // 保存图像
+        {
+            QMessageBox::information(this,
+                                     tr("Failed to save the image"),
+                                     tr("Failed to save the image!"));
+            return;
+        }
+    }
 }
