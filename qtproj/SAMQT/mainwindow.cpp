@@ -122,6 +122,11 @@ void MainWindow::on_btn_save_img_clicked()
     }
     else
     {
+        if(!(filename.endsWith(".bmp") || filename.endsWith(".png") || filename.endsWith(".jpg")))
+        {
+            filename += ".png";
+        }
+        
         if (!(cur_image.save(filename))) // 保存图像
         {
             QMessageBox::information(this,
