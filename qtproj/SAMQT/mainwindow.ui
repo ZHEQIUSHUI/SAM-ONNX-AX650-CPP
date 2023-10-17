@@ -105,6 +105,13 @@
            </layout>
           </item>
           <item>
+           <widget class="QCheckBox" name="ch_merge_mask">
+            <property name="text">
+             <string>MergeMask</string>
+            </property>
+           </widget>
+          </item>
+          <item>
            <widget class="QPushButton" name="btn_remove_obj">
             <property name="enabled">
              <bool>true</bool>

@@ -56,7 +56,7 @@ void MainWindow::on_btn_remove_obj_clicked()
         dilate_size = 111;
     if (dilate_size < 5)
         dilate_size = 5;
-    this->ui->label->ShowRemoveObject(dilate_size, this->ui->progressBar_remove_obj);
+    this->ui->label->ShowRemoveObject(dilate_size, this->ui->progressBar_remove_obj, ui->ch_merge_mask->isChecked());
     this->setEnabled(true);
 }
 
@@ -122,11 +122,11 @@ void MainWindow::on_btn_save_img_clicked()
     }
     else
     {
-        if(!(filename.endsWith(".bmp") || filename.endsWith(".png") || filename.endsWith(".jpg")))
+        if (!(filename.endsWith(".bmp") || filename.endsWith(".png") || filename.endsWith(".jpg")))
         {
             filename += ".png";
         }
-        
+
         if (!(cur_image.save(filename))) // 保存图像
         {
             QMessageBox::information(this,

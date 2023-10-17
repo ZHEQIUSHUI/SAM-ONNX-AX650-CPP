@@ -35,7 +35,7 @@ private:
     bool mouseHolding = false;
     QPoint pt_img_first, pt_img_secend;
     SAM mSam;
-//    LamaInpaintOnnx mInpaint;
+    //    LamaInpaintOnnx mInpaint;
     std::shared_ptr<LamaInpaint> mInpaint;
 
     void dragEnterEvent(QDragEnterEvent *event) override
@@ -221,7 +221,7 @@ public:
     void InitModel(std::string encoder_model, std::string decoder_model, std::string inpaint_model)
     {
         mSam.Load(encoder_model, decoder_model);
-//        mInpaint.Load(inpaint_model);
+        //        mInpaint.Load(inpaint_model);
 
         if (string_utility<std::string>::ends_with(inpaint_model, ".onnx"))
         {
@@ -238,7 +238,7 @@ public:
         mInpaint->Load(inpaint_model);
     }
 
-    void ShowRemoveObject(int dilate_size, QProgressBar *bar)
+    void ShowRemoveObject(int dilate_size, QProgressBar *bar, bool remove_mask_by_merge = true)
     {
         if (!cur_image.bits() || !grab_masks.size())
         {
@@ -262,21 +262,52 @@ public:
             bar->setMinimum(0);
             bar->setMaximum(grab_masks.size());
         }
-        for (auto grab_mask : grab_masks)
+        if (remove_mask_by_merge)
         {
-            auto time_start = std::chrono::high_resolution_clock::now();
-            inpainted = mInpaint->Inpaint(inpainted, grab_mask, dilate_size);
-            auto time_end = std::chrono::high_resolution_clock::now();
-            std::chrono::duration<double> diff = time_end - time_start;
-            std::cout << "Inpaint Inference Cost time : " << diff.count() << "s" << std::endl;
-            QImage qinpainted(inpainted.data, inpainted.cols, inpainted.rows, inpainted.step1(), QImage::Format_BGR888);
-            cur_image = qinpainted.copy();
-            if (cur_masks.size())
-                cur_masks.removeFirst();
-            repaint();
-            if (bar)
-                bar->setValue(bar->value() + 1);
+            if (grab_masks.size())
+            {
+                auto base_mask = grab_masks[0];
+                if (bar)
+                    bar->setValue(bar->value() + 1);
+
+                // merge all mask
+                for (size_t i = 1; i < grab_masks.size(); i++)
+                {
+                    base_mask |= grab_masks[i];
+                    if (bar)
+                        bar->setValue(bar->value() + 1);
+                }
+
+                auto time_start = std::chrono::high_resolution_clock::now();
+                inpainted = mInpaint->Inpaint(inpainted, base_mask, dilate_size);
+                auto time_end = std::chrono::high_resolution_clock::now();
+                std::chrono::duration<double> diff = time_end - time_start;
+                std::cout << "Inpaint Inference Cost time : " << diff.count() << "s" << std::endl;
+                QImage qinpainted(inpainted.data, inpainted.cols, inpainted.rows, inpainted.step1(), QImage::Format_BGR888);
+                cur_image = qinpainted.copy();
+                cur_masks.clear();
+                repaint();
+            }
         }
+        else
+        {
+            for (auto grab_mask : grab_masks)
+            {
+                auto time_start = std::chrono::high_resolution_clock::now();
+                inpainted = mInpaint->Inpaint(inpainted, grab_mask, dilate_size);
+                auto time_end = std::chrono::high_resolution_clock::now();
+                std::chrono::duration<double> diff = time_end - time_start;
+                std::cout << "Inpaint Inference Cost time : " << diff.count() << "s" << std::endl;
+                QImage qinpainted(inpainted.data, inpainted.cols, inpainted.rows, inpainted.step1(), QImage::Format_BGR888);
+                cur_image = qinpainted.copy();
+                if (cur_masks.size())
+                    cur_masks.removeFirst();
+                repaint();
+                if (bar)
+                    bar->setValue(bar->value() + 1);
+            }
+        }
+
         cur_masks.clear();
         rgba_masks.clear();
         grab_masks.clear();
