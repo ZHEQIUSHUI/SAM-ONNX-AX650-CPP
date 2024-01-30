@@ -43,7 +43,7 @@ if(NOT OpenCV_DIR)
     set(OpenCV_DIR ${CMAKE_SOURCE_DIR}/third_party/libopencv-4.6-aarch64-none/lib/cmake/opencv4)
 endif()
 
-message(STATUS "OPENCV_DIR Path: ${OpenCV_DIR}")
+message(STATUS "OpenCV_DIR Path: ${OpenCV_DIR}")
 find_package(OpenCV REQUIRED)
 
 include_directories(${OpenCV_INCLUDE_DIRS})

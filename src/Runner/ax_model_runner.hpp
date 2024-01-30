@@ -9,6 +9,7 @@ typedef enum _color_space_e
     axdl_color_space_nv21,
     axdl_color_space_bgr,
     axdl_color_space_rgb,
+    axdl_color_space_feature_map,
 } ax_color_space_e;
 
 typedef struct _image_t
@@ -46,6 +47,7 @@ public:
 
     virtual void deinit() = 0;
 
+    int get_num_inputs() { return minput_tensors.size(); };
     int get_num_outputs() { return mtensors.size(); };
 
     const ax_runner_tensor_t &get_input(int idx) { return minput_tensors[idx]; }

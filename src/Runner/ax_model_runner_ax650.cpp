@@ -8,6 +8,7 @@
 #include <ax_engine_api.h>
 #include <fcntl.h>
 #include <sys/mman.h>
+#include <map>
 #include "sample_log.h"
 
 #define AX_CMM_ALIGN_SIZE 128
@@ -22,7 +23,7 @@ typedef enum
 
 typedef std::pair<AX_ENGINE_ALLOC_BUFFER_STRATEGY_T, AX_ENGINE_ALLOC_BUFFER_STRATEGY_T> INPUT_OUTPUT_ALLOC_STRATEGY;
 
-bool file_exist(const std::string &path)
+static bool file_exist(const std::string &path)
 {
     auto flag = false;
 
@@ -31,6 +32,74 @@ bool file_exist(const std::string &path)
     fs.close();
 
     return flag;
+}
+
+static void print_io_info(AX_ENGINE_IO_INFO_T *io_info)
+{
+    static std::map<AX_ENGINE_DATA_TYPE_T, const char *> data_type = {
+        {AX_ENGINE_DT_UNKNOWN, "UNKNOWN"},
+        {AX_ENGINE_DT_UINT8, "UINT8"},
+        {AX_ENGINE_DT_UINT16, "UINT16"},
+        {AX_ENGINE_DT_FLOAT32, "FLOAT32"},
+        {AX_ENGINE_DT_SINT16, "SINT16"},
+        {AX_ENGINE_DT_SINT8, "SINT8"},
+        {AX_ENGINE_DT_SINT32, "SINT32"},
+        {AX_ENGINE_DT_UINT32, "UINT32"},
+        {AX_ENGINE_DT_FLOAT64, "FLOAT64"},
+        {AX_ENGINE_DT_UINT10_PACKED, "UINT10_PACKED"},
+        {AX_ENGINE_DT_UINT12_PACKED, "UINT12_PACKED"},
+        {AX_ENGINE_DT_UINT14_PACKED, "UINT14_PACKED"},
+        {AX_ENGINE_DT_UINT16_PACKED, "UINT16_PACKED"},
+    };
+
+    static std::map<AX_ENGINE_COLOR_SPACE_T, const char *> color_type = {
+        {AX_ENGINE_CS_FEATUREMAP, "FEATUREMAP"},
+        {AX_ENGINE_CS_RAW8, "RAW8"},
+        {AX_ENGINE_CS_RAW10, "RAW10"},
+        {AX_ENGINE_CS_RAW12, "RAW12"},
+        {AX_ENGINE_CS_RAW14, "RAW14"},
+        {AX_ENGINE_CS_RAW16, "RAW16"},
+        {AX_ENGINE_CS_NV12, "NV12"},
+        {AX_ENGINE_CS_NV21, "NV21"},
+        {AX_ENGINE_CS_RGB, "RGB"},
+        {AX_ENGINE_CS_BGR, "BGR"},
+        {AX_ENGINE_CS_RGBA, "RGBA"},
+        {AX_ENGINE_CS_GRAY, "GRAY"},
+        {AX_ENGINE_CS_YUV444, "YUV444"},
+    };
+    printf("\ninput size: %d\n", io_info->nInputSize);
+    for (uint32_t i = 0; i < io_info->nInputSize; ++i)
+    {
+        // print shape info,like [batchsize x channel x height x width]
+        auto &info = io_info->pInputs[i];
+        printf("    name: \e[1;32m%8s \e[1;34m[%s] [%s]\e[0m\n        \e[1;31m", info.pName, data_type[info.eDataType], color_type[info.pExtraMeta->eColorSpace]);
+        for (AX_U8 s = 0; s < info.nShapeSize; s++)
+        {
+            printf("%d", info.pShape[s]);
+            if (s != info.nShapeSize - 1)
+            {
+                printf(" x ");
+            }
+        }
+        printf("\e[0m\n\n");
+    }
+
+    printf("\noutput size: %d\n", io_info->nOutputSize);
+    for (uint32_t i = 0; i < io_info->nOutputSize; ++i)
+    {
+        // print shape info,like [batchsize x channel x height x width]
+        auto &info = io_info->pOutputs[i];
+        printf("    name: \e[1;32m%8s \e[1;34m[%s]\e[0m\n        \e[1;31m", info.pName, data_type[info.eDataType]);
+        for (AX_U8 s = 0; s < info.nShapeSize; s++)
+        {
+            printf("%d", info.pShape[s]);
+            if (s != info.nShapeSize - 1)
+            {
+                printf(" x ");
+            }
+        }
+        printf("\e[0m\n\n");
+    }
 }
 
 class MMap
@@ -250,9 +319,11 @@ int ax_runner_ax650::init(const char *model_file)
     }
     fprintf(stdout, "Engine get io info is done. \n");
 
+    print_io_info(m_handle->io_info);
+
     // 6. alloc io
 
-    ret = prepare_io(m_handle->io_info, &m_handle->io_data, std::make_pair(AX_ENGINE_ABST_DEFAULT, AX_ENGINE_ABST_CACHED));
+    ret = prepare_io(m_handle->io_info, &m_handle->io_data, std::make_pair(AX_ENGINE_ABST_DEFAULT, AX_ENGINE_ABST_DEFAULT));
     if (0 != ret)
     {
         ALOGE("prepare_io");
@@ -276,6 +347,11 @@ int ax_runner_ax650::init(const char *model_file)
         break;
     case AX_ENGINE_CS_BGR:
         m_handle->algo_colorformat = (int)AX_FORMAT_BGR888;
+        m_handle->algo_height = m_handle->io_info->pInputs[0].pShape[1];
+        ALOGI("BGR MODEL");
+        break;
+    case AX_ENGINE_CS_FEATUREMAP:
+        m_handle->algo_colorformat = -1;
         m_handle->algo_height = m_handle->io_info->pInputs[0].pShape[1];
         ALOGI("BGR MODEL");
         break;
@@ -342,6 +418,8 @@ ax_color_space_e ax_runner_ax650::get_color_space()
         return ax_color_space_e::axdl_color_space_bgr;
     case AX_FORMAT_YUV420_SEMIPLANAR:
         return ax_color_space_e::axdl_color_space_nv12;
+    case -1:
+        return ax_color_space_e::axdl_color_space_feature_map;
     default:
         return axdl_color_space_unknown;
     }

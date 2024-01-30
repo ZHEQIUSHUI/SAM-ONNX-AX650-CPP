@@ -7,9 +7,11 @@ int main(int argc, char *argv[])
     std::string image_path = "./test.jpg";
     std::string encoder_model_path = "./onnx_models/mobile_sam_encoder.onnx";
     std::string decoder_model_path = "./onnx_models/mobile_sam_decoder.onnx";
+    std::string decoder_pts_enc_model_path;
 
     cmdline::parser cmd;
     cmd.add<std::string>("encoder", 'e', "encoder model(onnx model or axmodel)", true, encoder_model_path);
+    cmd.add<std::string>("ptsenc", 'p', "decoder model(onnx)", true, decoder_model_path);
     cmd.add<std::string>("decoder", 'd', "decoder model(onnx)", true, decoder_model_path);
     cmd.add<std::string>("image", 'i', "image file(jpg png etc....)", true, image_path);
 
@@ -18,10 +20,12 @@ int main(int argc, char *argv[])
     image_path = cmd.get<std::string>("image");
     encoder_model_path = cmd.get<std::string>("encoder");
     decoder_model_path = cmd.get<std::string>("decoder");
+    decoder_pts_enc_model_path = cmd.get<std::string>("ptsenc");
 
     cv::Mat src = cv::imread(image_path);
     SAM sam;
-    sam.Load(encoder_model_path, decoder_model_path);
+    sam.LoadEncoder(encoder_model_path);
+    sam.LoadDecoder(decoder_pts_enc_model_path, decoder_model_path);
     sam.Encode(src);
 
     cv::Point pointinfo(910, 641);

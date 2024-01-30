@@ -13,9 +13,60 @@ struct MatInfo
     float iou_pred;
 };
 
-class SAMDecoderOnnx
+class SAMDecoder
 {
-private:
+protected:
+    std::vector<float> samfeature;
+    std::vector<int64_t> samfeature_shape;
+    int img_width, img_height;
+    float encoder_scale = -1;
+
+    virtual std::vector<MatInfo> Decoder_Inference(cv::Point *clickinfo, cv::Rect *boxinfo) = 0;
+
+public:
+    virtual int Load(std::string model_file, int nthread = 4)
+    {
+        ALOGE("no impl");
+        return -1;
+    };
+    virtual int Load(std::string model_file_pts, std::string model_file_sub, int nthread = 4)
+    {
+        ALOGE("no impl");
+        return -1;
+    };
+
+    std::vector<MatInfo> Inference(cv::Point pt)
+    {
+        return Decoder_Inference(&pt, nullptr);
+    }
+
+    std::vector<MatInfo> Inference(cv::Rect box)
+    {
+        cv::Point center((box.tl().x + box.br().x) / 2,
+                         (box.tl().y + box.br().y) / 2);
+        return Decoder_Inference(&center, &box);
+    }
+
+    void LoadFeature(int width, int height, float *feature, int feature_size, std::vector<unsigned int> feature_shape, float scale)
+    {
+        samfeature.resize(feature_size);
+        memcpy(samfeature.data(), feature, feature_size * 4);
+
+        samfeature_shape.resize(feature_shape.size());
+        for (size_t i = 0; i < feature_shape.size(); i++)
+        {
+            samfeature_shape[i] = feature_shape[i];
+        }
+
+        img_width = width;
+        img_height = height;
+        encoder_scale = scale;
+    }
+};
+
+class SAMDecoderOnnx : public SAMDecoder
+{
+protected:
     std::string device{"cpu"};
     Ort::Env env;
     Ort::SessionOptions session_options;
@@ -27,12 +78,7 @@ private:
                                      "mask_input", "has_mask_input", "orig_im_size"},
         *DecoderOutputNames[3]{"masks", "iou_predictions", "low_res_masks"};
 
-    std::vector<float> samfeature;
-    std::vector<int64_t> samfeature_shape;
-    int img_width, img_height;
-    float encoder_scale = -1;
-
-    std::vector<MatInfo> Decoder_Inference(cv::Point *clickinfo, cv::Rect *boxinfo)
+    std::vector<MatInfo> Decoder_Inference(cv::Point *clickinfo, cv::Rect *boxinfo) override
     {
         int numPoints = boxinfo ? 3 : 1;
 
@@ -139,7 +185,7 @@ private:
     }
 
 public:
-    int Load(std::string model_file, int nthread = 4)
+    int Load(std::string model_file, int nthread = 4) override
     {
         // 初始化OnnxRuntime运行环境
         env = Ort::Env(ORT_LOGGING_LEVEL_WARNING, "SegmentAnythingModel");
@@ -157,32 +203,167 @@ public:
         }
         return 0;
     }
+};
 
-    void LoadFeature(int width, int height, float *feature, int feature_size, std::vector<unsigned int> feature_shape, float scale)
+class SAMDecoderOnnxV2 : public SAMDecoderOnnx
+{
+protected:
+    std::shared_ptr<Ort::Session> DecoderEncPtsSession;
+
+    const char
+        *DecoderPtsEncInputNmae[2] = {"point_coords", "point_labels"},
+        *DecoderPtsEncOutputNmae[1] = {"/Add_5_output_0"},
+        *DecoderInputNames[2]{"image_embeddings", "/Add_5_output_0"},
+        *DecoderOutputNames[2]{"iou_predictions", "low_res_masks"};
+
+    std::vector<Ort::Value> EncPts(cv::Point *clickinfo, cv::Rect *boxinfo)
     {
-        samfeature.resize(feature_size);
-        memcpy(samfeature.data(), feature, feature_size * 4);
+        // int numPoints = boxinfo ? 3 : 1;
 
-        samfeature_shape.resize(feature_shape.size());
-        for (size_t i = 0; i < feature_shape.size(); i++)
+        std::vector<float> inputLabelsValues = {1.0f, 0.0f, 0.0f};
+
+        std::vector<float> inputPointsValues = {
+            (float)clickinfo->x * encoder_scale,
+            (float)clickinfo->y * encoder_scale};
+        // printf("%2.2f %2.2f %2.2f\n", inputPointsValues[0], inputPointsValues[1], encoder_scale);
+        if (boxinfo)
         {
-            samfeature_shape[i] = feature_shape[i];
+            inputPointsValues.push_back((float)boxinfo->tl().x * encoder_scale);
+            inputPointsValues.push_back((float)boxinfo->tl().y * encoder_scale);
+
+            inputPointsValues.push_back((float)boxinfo->br().x * encoder_scale);
+            inputPointsValues.push_back((float)boxinfo->br().y * encoder_scale);
+            inputLabelsValues = {1.0f, 2.0f, 3.0f};
         }
 
-        img_width = width;
-        img_height = height;
-        encoder_scale = scale;
+        std::vector<int64_t> inputPointShape = {1, 3, 2},
+                             pointLabelsShape = {1, 3};
+
+        std::vector<Ort::Value> inputTensorsSam;
+
+        inputTensorsSam.push_back(Ort::Value::CreateTensor<float>(
+            memory_info_handler, inputPointsValues.data(), 2 * 3, inputPointShape.data(), inputPointShape.size()));
+        inputTensorsSam.push_back(Ort::Value::CreateTensor<float>(
+            memory_info_handler, inputLabelsValues.data(), 1 * 3, pointLabelsShape.data(), pointLabelsShape.size()));
+
+        Ort::RunOptions runOptionsSam;
+
+        auto DecoderEncPtsOutputTensors = DecoderEncPtsSession->Run(runOptionsSam, DecoderPtsEncInputNmae, inputTensorsSam.data(),
+                                                                    inputTensorsSam.size(), DecoderPtsEncOutputNmae, 1);
+        return DecoderEncPtsOutputTensors;
     }
 
-    std::vector<MatInfo> Inference(cv::Point pt)
+    std::vector<MatInfo> PostPorcess(float *iou_predictions, float *masks)
     {
-        return Decoder_Inference(&pt, nullptr);
+        std::vector<MatInfo> masks_list;
+        for (unsigned int index = 0; index < 4; index++)
+        {
+            cv::Mat tmp(256, 256, CV_32FC1, masks + index * 256 * 256), mask;
+            cv::resize(tmp, mask, cv::Size(1024, 1024));
+            // float *mask_ptr = mask.ptr<float>();
+            for (unsigned int i = 0; i < mask.rows; i++)
+            {
+                for (unsigned int j = 0; j < mask.cols; j++)
+                {
+                    // if (mask.at<float>(i, j) > 0)
+                    // {
+                    //     printf("%f\n", mask.at<float>(i, j));
+                    // }
+
+                    //
+                    mask.at<float>(i, j) = mask.at<float>(i, j) > 0 ? 255 : 0;
+                }
+            }
+            mask.convertTo(mask, CV_8UC1);
+
+            MatInfo mat_info;
+            mat_info.mask = mask(cv::Rect(0, 0, MIN(mask.cols, encoder_scale * img_width), MIN(mask.rows, encoder_scale * img_height))).clone();
+            cv::resize(mat_info.mask, mat_info.mask, cv::Size(img_width, img_height));
+            mat_info.iou_pred = *(iou_predictions++);
+            masks_list.emplace_back(mat_info);
+        }
+        return masks_list;
     }
 
-    std::vector<MatInfo> Inference(cv::Rect box)
+    std::vector<MatInfo> Decoder_Inference(cv::Point *clickinfo, cv::Rect *boxinfo) override
     {
-        cv::Point center((box.tl().x + box.br().x) / 2,
-                         (box.tl().y + box.br().y) / 2);
-        return Decoder_Inference(&center, &box);
+
+        auto DecoderEncPtsOutputTensors = EncPts(clickinfo, boxinfo);
+
+        // auto masks = DecoderOutputTensors[0].GetTensorMutableData<float>();
+
+        // Ort::Value &masks_ = DecoderOutputTensors[0];
+        Ort::RunOptions runOptionsSam;
+        std::vector<Ort::Value> inputTensorsSam;
+        inputTensorsSam.push_back(Ort::Value::CreateTensor<float>(
+            memory_info_handler, samfeature.data(), samfeature.size(),
+            samfeature_shape.data(), samfeature_shape.size()));
+        // inputTensorsSam.push_back(Ort::Value(DecoderEncPtsOutputTensors[0]));
+        inputTensorsSam.push_back(Ort::Value::CreateTensor<float>(
+            memory_info_handler,
+            DecoderEncPtsOutputTensors[0].GetTensorMutableData<float>(),
+            DecoderEncPtsOutputTensors[0].GetTensorTypeAndShapeInfo().GetElementCount(),
+            DecoderEncPtsOutputTensors[0].GetTensorTypeAndShapeInfo().GetShape().data(),
+            DecoderEncPtsOutputTensors[0].GetTensorTypeAndShapeInfo().GetShape().size()));
+
+        auto DecoderOutputTensors = DecoderSession->Run(runOptionsSam, DecoderInputNames, inputTensorsSam.data(),
+                                                        inputTensorsSam.size(), DecoderOutputNames, 2);
+
+        Ort::Value &iou_pred = DecoderOutputTensors[0];
+        Ort::Value &low_res_masks_ = DecoderOutputTensors[1];
+
+        float *iou_predictions = iou_pred.GetTensorMutableData<float>();
+        float *masks = low_res_masks_.GetTensorMutableData<float>();
+
+        // std::vector<MatInfo> masks_list;
+        // for (unsigned int index = 0; index < 4; index++)
+        // {
+        //     cv::Mat tmp(256, 256, CV_32FC1, masks + index * 256 * 256), mask;
+        //     cv::resize(tmp, mask, cv::Size(1024, 1024));
+
+        //     // float *mask_ptr = mask.ptr<float>();
+        //     for (unsigned int i = 0; i < mask.rows; i++)
+        //     {
+        //         for (unsigned int j = 0; j < mask.cols; j++)
+        //         {
+        //             mask.at<float>(i, j) = mask.at<float>(i, j) > 0 ? 255 : 0;
+        //         }
+        //     }
+        //     mask.convertTo(mask, CV_8UC1);
+
+        //     MatInfo mat_info;
+        //     mat_info.mask = mask(cv::Rect(0, 0, MIN(mask.cols, encoder_scale * img_width), MIN(mask.rows, encoder_scale * img_height))).clone();
+        //     cv::resize(mat_info.mask, mat_info.mask, cv::Size(img_width, img_height));
+        //     mat_info.iou_pred = *(iou_predictions++);
+        //     masks_list.emplace_back(mat_info);
+        // }
+        return PostPorcess(iou_predictions, masks);
+    }
+
+public:
+    int Load(std::string model_file_pts, std::string model_file_sub, int nthread = 4) override
+    {
+        // 初始化OnnxRuntime运行环境
+        env = Ort::Env(ORT_LOGGING_LEVEL_WARNING, "SegmentAnythingModel");
+        session_options = Ort::SessionOptions();
+        session_options.SetInterOpNumThreads(std::thread::hardware_concurrency());
+        session_options.SetIntraOpNumThreads(std::thread::hardware_concurrency());
+        // 设置图像优化级别
+        session_options.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_ALL);
+
+        DecoderSession.reset(new Ort::Session(env, model_file_sub.c_str(), session_options));
+        if (DecoderSession->GetInputCount() != 2 || DecoderSession->GetOutputCount() != 2)
+        {
+            ALOGE("DecoderSession Model not loaded (invalid input/output count)");
+            return -1;
+        }
+
+        DecoderEncPtsSession.reset(new Ort::Session(env, model_file_pts.c_str(), session_options));
+        if (DecoderEncPtsSession->GetInputCount() != 2 || DecoderEncPtsSession->GetOutputCount() != 1)
+        {
+            ALOGE("DecoderEncPtsSession Model not loaded (invalid input/output count)");
+            return -1;
+        }
+        return 0;
     }
 };
